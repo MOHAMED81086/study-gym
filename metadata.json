@@ -1,0 +1,5 @@
+{
+  "name": "رشاقة AI مذاكرة",
+  "description": "تطبيق يجمع بين اللياقة البدنية والمذاكرة باستخدام الذكاء الاصطناعي",
+  "requestFramePermissions": ["camera", "microphone"]
+}

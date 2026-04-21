@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user fitness and study preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "age": { "type": "number" },
+        "weight": { "type": "number", "description": "Weight in kg" },
+        "height": { "type": "number", "description": "Height in cm" },
+        "bodyType": { "type": "string", "enum": ["نحيف", "معتدل", "ممتلئ", "غير محدد"] },
+        "dailyCaloriesTarget": { "type": "number" },
+        "dailyStepsTarget": { "type": "number" },
+        "dailyWaterTarget": { "type": "number" },
+        "currentSteps": { "type": "number" },
+        "currentWater": { "type": "number" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "StudySession": {
+      "title": "Study Session",
+      "description": "A scheduled study session",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "title": { "type": "string" },
+        "subject": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "durationMinutes": { "type": "number" },
+        "completed": { "type": "boolean" }
+      },
+      "required": ["uid", "title", "startTime", "durationMinutes"]
+    },
+    "WorkoutSession": {
+      "title": "Workout Session",
+      "description": "A completed workout",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "type": { "type": "string" },
+        "durationMinutes": { "type": "number" },
+        "caloriesBurned": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "type", "durationMinutes", "date"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profiles"
+    },
+    "/study_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/StudySession" },
+      "description": "Study sessions for users"
+    },
+    "/workout_sessions/{workoutId}": {
+      "schema": { "$ref": "#/entities/WorkoutSession" },
+      "description": "Workout sessions for users"
+    }
+  }
+}
