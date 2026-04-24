@@ -1,47 +1,37 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { X, Play, Pause, CheckCircle, Timer, Plus, Minus } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { X, Play, Pause, CheckCircle, Timer, Plus, Minus, Activity } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
-
-const MALE_EXERCISES = [
-  { id: 'pushups', nameKey: 'pushups', duration: 30, image: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Push-Up.gif' },
-  { id: 'squats', nameKey: 'squats', duration: 30, image: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Squat.gif' },
-  { id: 'plank', nameKey: 'plank', duration: 30, image: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Plank.gif' },
-  { id: 'burpees', nameKey: 'burpees', duration: 30, image: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Burpee.gif' },
-  { id: 'lunges', nameKey: 'lunges', duration: 30, image: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Forward-Lunge.gif' },
-  { id: 'mountain_climbers', nameKey: 'mountain_climbers', duration: 30, image: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Mountain-Climber.gif' },
-  { id: 'jumping_jacks', nameKey: 'jumping_jacks', duration: 30, image: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Jumping-Jacks.gif' },
-  { id: 'superman', nameKey: 'superman', duration: 30, image: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Superman.gif' },
-  { id: 'bicycle_crunches', nameKey: 'bicycle_crunches', duration: 30, image: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Bicycle-Crunch.gif' },
-  { id: 'leg_raises', nameKey: 'leg_raises', duration: 30, image: 'https://fitnessprogramer.com/wp-content/uploads/2021/02/Leg-Raise.gif' }
-];
-
-const FEMALE_EXERCISES = [
-  { id: 'pushups', nameKey: 'pushups', duration: 30, image: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJqZ3JqZ3JqZ3JqZ3JqZ3JqZ3JqZ3JqZ3JqZ3JqZ3JqZ3JqJmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKVUn7iM8FMEU24/giphy.gif' },
-  { id: 'squats', nameKey: 'squats', duration: 30, image: 'https://www.spotebi.com/wp-content/uploads/2014/10/squats-exercise-illustration.gif' },
-  { id: 'plank', nameKey: 'plank', duration: 30, image: 'https://www.spotebi.com/wp-content/uploads/2014/10/plank-exercise-illustration.gif' },
-  { id: 'burpees', nameKey: 'burpees', duration: 30, image: 'https://www.spotebi.com/wp-content/uploads/2014/10/burpees-exercise-illustration.gif' },
-  { id: 'lunges', nameKey: 'lunges', duration: 30, image: 'https://www.spotebi.com/wp-content/uploads/2014/10/lunges-exercise-illustration.gif' },
-  { id: 'mountain_climbers', nameKey: 'mountain_climbers', duration: 30, image: 'https://www.spotebi.com/wp-content/uploads/2014/10/mountain-climbers-exercise-illustration.gif' },
-  { id: 'jumping_jacks', nameKey: 'jumping_jacks', duration: 30, image: 'https://www.spotebi.com/wp-content/uploads/2014/10/jumping-jacks-exercise-illustration.gif' },
-  { id: 'superman', nameKey: 'superman', duration: 30, image: 'https://www.spotebi.com/wp-content/uploads/2015/02/superman-exercise-illustration.gif' },
-  { id: 'bicycle_crunches', nameKey: 'bicycle_crunches', duration: 30, image: 'https://www.spotebi.com/wp-content/uploads/2014/10/bicycle-crunches-exercise-illustration.gif' },
-  { id: 'leg_raises', nameKey: 'leg_raises', duration: 30, image: 'https://www.spotebi.com/wp-content/uploads/2014/10/straight-leg-raise-exercise-illustration.gif' }
-];
+import { WORKOUT_PLANS } from '../data/workoutPlans';
 
 const REST_DURATION = 10;
 
 export default function WorkoutPlayer() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { gender, t, language } = useSettings();
-  const exercises = gender === 'male' ? MALE_EXERCISES : FEMALE_EXERCISES;
+  
+  // Parse plan from URL
+  const queryParams = new URLSearchParams(location.search);
+  const planId = queryParams.get('plan') || 'fat_loss';
+  const planDefinitions = WORKOUT_PLANS[planId as keyof typeof WORKOUT_PLANS] || WORKOUT_PLANS.fat_loss;
+  const exercises = gender === 'male' ? planDefinitions.male : planDefinitions.female;
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isResting, setIsResting] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(exercises[0].duration);
+  const [timeLeft, setTimeLeft] = useState(exercises[0]?.duration || 30);
   const [isPaused, setIsPaused] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [showCongrats, setShowCongrats] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(true);
+
+  // Reset loading state and timer when exercise changes
+  useEffect(() => {
+    setIsImageLoading(true);
+    if (!isResting) {
+      setTimeLeft(exercises[currentIndex]?.duration || 30);
+    }
+  }, [currentIndex, isResting, exercises]);
 
   useEffect(() => {
     if (isPaused || isFinished || showCongrats) return;
@@ -83,8 +73,8 @@ export default function WorkoutPlayer() {
   const handleFinish = () => {
     setShowCongrats(true);
     setTimeout(() => {
-      navigate('/');
-    }, 2000);
+      navigate('/fitness');
+    }, 3000);
   };
 
   const formatTime = (seconds: number) => {
@@ -95,48 +85,60 @@ export default function WorkoutPlayer() {
 
   if (showCongrats) {
     return (
-      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 animate-bounce">
-          <CheckCircle size={48} />
+      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
+        <div className="w-28 h-28 bg-green-500/10 text-green-600 rounded-full flex items-center justify-center mb-8 animate-bounce shadow-xl">
+          <CheckCircle size={56} />
         </div>
-        <h2 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">{t('congrats')}</h2>
+        <h2 className="text-4xl font-black mb-4 text-gray-900 dark:text-white tracking-tight">{t('congrats')}</h2>
+        <p className="text-gray-500 font-bold uppercase tracking-widest">{t('back')}...</p>
       </div>
     );
   }
 
   const currentExercise = exercises[currentIndex] || exercises[0];
+  const isJumping = ['jumping_jacks', 'high_knees', 'burpees', 'squat_jumps'].includes(currentExercise?.id || '');
+  const isPushing = ['pushups', 'pushups_wide', 'diamond_pushups', 'decline_pushups'].includes(currentExercise?.id || '');
+
   const progress = isResting 
     ? ((REST_DURATION - timeLeft) / REST_DURATION) * 100
     : currentExercise ? ((currentExercise.duration - timeLeft) / currentExercise.duration) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 bg-gray-900 text-white z-50 flex flex-col overflow-hidden" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="fixed inset-0 bg-white dark:bg-gray-950 text-gray-900 dark:text-white z-50 flex flex-col overflow-hidden" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Header */}
-      <div className="flex justify-between items-center p-4 bg-gray-900/50 backdrop-blur-sm z-10">
-        <button onClick={() => navigate('/fitness')} className="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors">
+      <div className="flex justify-between items-center p-6 z-10 border-b dark:border-gray-800">
+        <button onClick={() => navigate('/fitness')} className="p-3 bg-gray-100 dark:bg-gray-800 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all active:scale-95 shadow-sm">
           <X size={24} />
         </button>
-        <div className="font-bold text-gray-400">
-          {t('exercise')} {currentIndex + 1} {t('of')} {exercises.length}
+        <div className="flex flex-col items-center">
+          <div className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">
+            {t('exercise')} {currentIndex + 1} / {exercises.length}
+          </div>
+          <div className="flex items-center gap-1 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full border border-green-100 dark:border-green-800">
+            <CheckCircle size={10} className="text-green-600" />
+            <span className="text-[10px] font-black text-green-600 uppercase tracking-tighter">{t('no_equipment')}</span>
+          </div>
         </div>
-        <div className="w-10"></div>
+        <div className="w-12"></div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-between p-6 text-center relative">
+      <div className="flex-1 flex flex-col items-center justify-between p-6 text-center relative max-w-2xl mx-auto w-full">
         {isResting ? (
-          <div className="flex-1 flex flex-col items-center justify-center space-y-8">
-            <div className="w-24 h-24 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center mx-auto animate-pulse">
-              <Timer size={48} />
+          <div className="flex-1 flex flex-col items-center justify-center space-y-8 animate-in zoom-in duration-300">
+            <div className="w-28 h-28 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto animate-pulse">
+              <Timer size={56} />
             </div>
             <div className="space-y-4">
-              <h2 className="text-5xl font-bold text-blue-400">{t('rest_time')}</h2>
-              <p className="text-xl text-gray-400">{t('prepare')}</p>
-              <p className="text-3xl font-bold text-white">{t(exercises[currentIndex + 1]?.nameKey || '')}</p>
+              <h2 className="text-6xl font-black text-blue-600 tracking-tighter">{t('rest_time')}</h2>
+              <div className="px-6 py-2 bg-gray-100 dark:bg-gray-800 rounded-full inline-block">
+                <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">{t('prepare')}</p>
+              </div>
+              <p className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">{t(exercises[currentIndex + 1]?.nameKey || '')}</p>
             </div>
             <button 
               onClick={handleSkip}
-              className="px-8 py-4 bg-blue-600/20 border border-blue-500/30 rounded-2xl flex items-center gap-2 hover:bg-blue-600/30 transition-all active:scale-95 text-blue-400 font-bold"
+              className="px-10 py-5 bg-blue-600 text-white rounded-3xl flex items-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all active:scale-95 font-black text-lg"
             >
               {language === 'ar' ? 'تخطي الاستراحة' : 'Skip Rest'}
             </button>
@@ -144,39 +146,53 @@ export default function WorkoutPlayer() {
         ) : (
           <>
             {/* Animation Area */}
-            <div className="w-full max-w-sm aspect-square bg-white rounded-3xl overflow-hidden shadow-2xl flex items-center justify-center p-4 relative group">
+            <div className="w-full aspect-square bg-white dark:bg-gray-900 rounded-[3rem] overflow-hidden shadow-inner flex items-center justify-center relative border-8 border-white dark:border-gray-800 shadow-xl">
+              {isImageLoading && (
+                <div className="absolute inset-0 bg-white dark:bg-gray-900 flex flex-col items-center justify-center gap-4 z-20">
+                  <Activity size={48} className="text-blue-500 animate-spin" />
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">Loading Animation...</p>
+                </div>
+              )}
+
               <img 
+                key={currentExercise?.image}
                 src={currentExercise?.image} 
-                alt={t(currentExercise?.nameKey || '')}
-                className={`w-full h-full object-contain mix-blend-multiply transition-all duration-500 ${isPaused ? 'opacity-20 grayscale scale-95' : 'opacity-100 scale-100'}`}
+                alt={t(currentExercise?.nameKey || '')} 
+                className={`w-full h-full object-contain relative z-10 transition-all duration-700 transform ${isPaused ? 'opacity-20 blur-xl scale-90' : 'opacity-100 scale-100'}`}
                 referrerPolicy="no-referrer"
-                key={currentExercise?.id} // Force reload on exercise change
+                onLoad={() => setIsImageLoading(false)}
                 onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (target.src.includes('fitnessprogramer.com')) {
-                    // Fallback to spotebi illustration if fitnessprogramer fails
-                    const femaleEx = FEMALE_EXERCISES.find(ex => ex.id === currentExercise.id);
-                    if (femaleEx) target.src = femaleEx.image;
-                  }
+                  setIsImageLoading(false);
+                  e.currentTarget.src = `https://picsum.photos/seed/${currentExercise?.id}/800/800`;
                 }}
               />
+              
               {isPaused && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-gray-900/90 text-white px-8 py-4 rounded-full font-bold text-2xl flex items-center gap-3 shadow-2xl animate-in fade-in zoom-in duration-300">
-                    <Pause size={32} fill="currentColor" /> {language === 'ar' ? 'متوقف' : 'Paused'}
+                <div className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-[4px] transition-all duration-300">
+                  <div className="bg-white/90 dark:bg-gray-800/90 text-blue-600 dark:text-blue-400 px-12 py-6 rounded-[2.5rem] font-black text-3xl flex items-center gap-6 shadow-2xl border-4 border-blue-600/20">
+                    <Pause size={40} fill="currentColor" /> {language === 'ar' ? 'مؤقت' : 'Paused'}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Exercise Name */}
-            <h2 className="text-3xl font-bold mt-4">{t(currentExercise.nameKey)}</h2>
+            {/* Exercise Details */}
+            <div className="w-full space-y-2 mt-8">
+              <h2 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">{t(currentExercise.nameKey)}</h2>
+              <div className="flex items-center justify-center gap-4">
+                <span className="text-sm font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-4 py-1 rounded-full uppercase tracking-widest">
+                  {currentExercise.duration}s
+                </span>
+                <span className="text-sm font-bold text-purple-600 bg-purple-50 dark:bg-purple-900/30 px-4 py-1 rounded-full uppercase tracking-widest">
+                  {isJumping ? '450' : isPushing ? '300' : '150'} kcal
+                </span>
+              </div>
+            </div>
 
-            {/* Skip Button for Exercise */}
-            <div className="flex-1 flex flex-col items-center justify-center w-full">
+            <div className="flex-1 flex items-end justify-center w-full pb-8">
               <button 
                 onClick={handleSkip}
-                className="px-8 py-4 bg-gray-800/50 border border-gray-700 rounded-2xl flex items-center gap-2 hover:bg-gray-700 transition-all active:scale-95 text-gray-300 font-bold"
+                className="px-8 py-3 text-gray-400 hover:text-gray-600 font-bold uppercase tracking-widest text-xs transition-colors"
               >
                 {language === 'ar' ? 'تخطي التمرين' : 'Skip Exercise'}
               </button>
@@ -185,43 +201,41 @@ export default function WorkoutPlayer() {
         )}
 
         {/* Timer and Progress */}
-        <div className="w-full space-y-6 pt-4">
+        <div className="w-full space-y-6 pt-4 bg-white dark:bg-gray-950">
           <div className="flex flex-col items-center">
-            <div className="text-5xl font-bold tabular-nums tracking-tighter text-gray-300">
-              {formatTime(timeLeft)}
+            <div className="text-7xl font-black tabular-nums tracking-tighter text-gray-900 dark:text-white">
+              {timeLeft}
+              <span className="text-lg text-gray-400 ms-1 font-bold">s</span>
             </div>
-            <div className="text-[10px] text-gray-600 uppercase tracking-widest font-bold mt-1">{t('timer')}</div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="h-1.5 bg-gray-800 rounded-full w-full overflow-hidden">
-            <div 
-              className={`h-full transition-all duration-1000 ease-linear ${isResting ? 'bg-blue-500' : 'bg-green-500'}`}
-              style={{ width: `${progress}%` }}
-            ></div>
+          {/* Progress Bar Container */}
+          <div className="px-4">
+            <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded-full w-full overflow-hidden shadow-inner">
+              <div 
+                className={`h-full transition-all duration-1000 ease-linear rounded-full ${isResting ? 'bg-amber-500' : 'bg-blue-600'}`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Bottom Controls */}
-      <div className="p-6 pb-10 flex justify-between items-center gap-4 bg-gray-900/80 backdrop-blur-md border-t border-gray-800">
+      <div className="p-8 pb-12 flex justify-between items-center gap-6 bg-white dark:bg-gray-950 border-t dark:border-gray-800">
         <button 
           onClick={() => setIsPaused(!isPaused)}
-          className="flex-1 h-16 bg-gray-800 text-white rounded-2xl flex items-center justify-center gap-3 font-bold hover:bg-gray-700 transition-all active:scale-95"
+          className="w-20 h-20 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-[2rem] flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-all active:scale-90"
         >
-          {isPaused ? (
-            <><Play size={24} fill="currentColor" /> {language === 'ar' ? 'استئناف' : 'Resume'}</>
-          ) : (
-            <><Pause size={24} fill="currentColor" /> {language === 'ar' ? 'إيقاف' : 'Pause'}</>
-          )}
+          {isPaused ? <Play size={32} fill="currentColor" /> : <Pause size={32} fill="currentColor" />}
         </button>
         
         {!isResting && (
           <button 
             onClick={handleFinish}
-            className="flex-1 h-16 bg-red-600 text-white rounded-2xl flex items-center justify-center gap-3 font-bold hover:bg-red-500 shadow-lg shadow-red-900/20 transition-all active:scale-95"
+            className="flex-1 h-20 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center gap-4 font-black text-xl hover:bg-blue-700 shadow-2xl shadow-blue-500/30 transition-all active:scale-95"
           >
-            <CheckCircle size={24} /> {t('finish')}
+            <CheckCircle size={28} /> {t('finish')}
           </button>
         )}
       </div>

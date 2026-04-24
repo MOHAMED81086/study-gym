@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Activity, Edit2, Save, X, TrendingDown } from 'lucide-react';
+import { Activity, Edit2, Save, X, TrendingDown, Flame, Zap, HeartPulse } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -170,34 +170,27 @@ export default function Fitness({ user }: { user: any }) {
       {/* Workouts */}
       <div className="space-y-6">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{t('suggested_workouts')}</h3>
-          <span className="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-1 rounded-full">10 Exercises</span>
+          <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{t('workout_plans')}</h3>
+          <span className="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-4 py-1 rounded-full">{t('select_plan')}</span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { id: 'pushups', color: 'bg-red-50 text-red-500 dark:bg-red-900/20' },
-            { id: 'squats', color: 'bg-blue-50 text-blue-500 dark:bg-blue-900/20' },
-            { id: 'plank', color: 'bg-green-50 text-green-500 dark:bg-green-900/20' },
-            { id: 'burpees', color: 'bg-orange-50 text-orange-500 dark:bg-orange-900/20' },
-            { id: 'lunges', color: 'bg-purple-50 text-purple-500 dark:bg-purple-900/20' },
-            { id: 'mountain_climbers', color: 'bg-indigo-50 text-indigo-500 dark:bg-indigo-900/20' },
-            { id: 'jumping_jacks', color: 'bg-pink-50 text-pink-500 dark:bg-pink-900/20' },
-            { id: 'superman', color: 'bg-yellow-50 text-yellow-500 dark:bg-yellow-900/20' },
-            { id: 'bicycle_crunches', color: 'bg-teal-50 text-teal-500 dark:bg-teal-900/20' },
-            { id: 'leg_raises', color: 'bg-cyan-50 text-cyan-500 dark:bg-cyan-900/20' }
-          ].map((ex) => (
-            <div key={ex.id} className="group bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col gap-6 hover:border-blue-500 hover:shadow-xl transition-all duration-300">
+            { id: 'fat_loss', icon: <Flame size={32} />, color: 'bg-orange-50 text-orange-500 dark:bg-orange-900/20', count: 6 },
+            { id: 'strength', icon: <Zap size={32} />, color: 'bg-blue-50 text-blue-500 dark:bg-blue-900/20', count: 6 },
+            { id: 'therapeutic', icon: <HeartPulse size={32} />, color: 'bg-teal-50 text-teal-500 dark:bg-teal-900/20', count: 5 }
+          ].map((plan) => (
+            <div key={plan.id} className="group bg-white dark:bg-gray-800 p-6 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col gap-6 hover:border-blue-500 hover:shadow-xl transition-all duration-300">
               <div className="flex items-center gap-4">
-                <div className={`w-16 h-16 ${ex.color} rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
-                  <Activity size={32} />
+                <div className={`w-16 h-16 ${plan.color} rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                  {plan.icon}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-black text-gray-900 dark:text-white">{t(ex.id)}</h4>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-bold mt-1 uppercase tracking-wider">30 {t('timer')} • {t('male')}/{t('female')}</p>
+                  <h4 className="font-black text-gray-900 dark:text-white">{t(plan.id)}</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-bold mt-1 uppercase tracking-wider">{plan.count} {t('exercise')} • {t('male')}/{t('female')}</p>
                 </div>
               </div>
               <Link 
-                to="/workout" 
+                to={`/workout?plan=${plan.id}`}
                 className="w-full bg-gray-50 dark:bg-gray-700 py-3 rounded-xl text-sm font-black text-center hover:bg-blue-600 hover:text-white transition-all"
               >
                 {t('start')}
